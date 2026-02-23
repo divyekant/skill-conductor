@@ -33,4 +33,4 @@ for skill_name in "${SKILL_NAMES[@]}"; do
 done
 
 echo ""
-echo "Uninstall complete. Superpowers plugin skills are unaffected."
+echo "Uninstall complete. Other skills in ~/.claude/skills/ are unaffected."

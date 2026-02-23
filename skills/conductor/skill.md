@@ -1,6 +1,6 @@
 ---
 name: conductor
-description: "Use at the start of every conversation. Classifies the task, selects a pipeline, and sequences skills through phases. Replaces using-superpowers as the entry-point router."
+description: "Use at the start of every conversation. Classifies the task, selects a pipeline, and sequences skills through phases."
 ---
 
 # Skill Conductor

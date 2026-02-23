@@ -65,10 +65,13 @@ always-available: []
 # The conductor classifies tasks and suggests a pipeline. Users can override.
 # Add your own pipelines to match your team's workflow.
 pipelines:
-  # Default workflow using the vendored shaping skills
+  # Default workflow using the vendored shaping skills.
+  # The shape phase uses shaping + breadboarding to define the solution.
+  # The build phase has no skill assigned — you just code.
+  # Add your own build/verify/review skills after onboarding.
   default:
     description: Shape the problem, then build
-    phases: [shape, build]
+    phases: [shape]
     skills:
       shape:
         - shaping

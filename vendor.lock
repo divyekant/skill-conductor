@@ -12,4 +12,4 @@
 - **Repo:** https://github.com/hamelsmu/claude-review-loop
 - **Pinned:** ef6b7ee (initial pin, 2026-02-22)
 - **Skills provided:** review-loop
-- **Notes:** Requires Codex CLI (`npm install -g @openai/codex`) and jq. Uses hooks + Codex multi-agent.
+- **Notes:** Requires Codex CLI (`npm install -g @openai/codex`) and jq. Uses hooks + Codex multi-agent. Used by examples/pipelines-superpowers.yaml; not in default config.
