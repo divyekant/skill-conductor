@@ -134,7 +134,7 @@ No adapters needed — Claude reads any skill directly.
 ### Full example with Superpowers
 
 See [`examples/pipelines-superpowers.yaml`](examples/pipelines-superpowers.yaml) for a complete setup wiring together:
-- [Superpowers](https://github.com/anthropics/superpowers) (brainstorming, TDD, debugging, code review)
+- [Superpowers](https://github.com/obra/superpowers) (brainstorming, TDD, debugging, code review)
 - [Shaping skills](https://github.com/rjs/shaping-skills) (Shape Up methodology)
 - [Review loop](https://github.com/hamelsmu/claude-review-loop) (automated Codex review)
 - [ui-val](https://github.com/AshDevFr/ui-val) (visual validation)
@@ -186,7 +186,7 @@ Removes only the symlinks this project created. Restores backups if any were mad
 ## Credits
 
 Built on ideas from:
-- [superpowers](https://github.com/anthropics/superpowers) by Anthropic
+- [superpowers](https://github.com/obra/superpowers) by [@obra](https://github.com/obra)
 - [shaping-skills](https://github.com/rjs/shaping-skills) by [@rjs](https://github.com/rjs)
 - [claude-review-loop](https://github.com/hamelsmu/claude-review-loop) by [@hamelsmu](https://github.com/hamelsmu)
 
