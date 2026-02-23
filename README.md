@@ -201,6 +201,10 @@ Built on ideas from:
 - [shaping-skills](https://github.com/rjs/shaping-skills) by [@rjs](https://github.com/rjs)
 - [claude-review-loop](https://github.com/hamelsmu/claude-review-loop) by [@hamelsmu](https://github.com/hamelsmu)
 
+## LLM Quickstart
+
+Want to give this to a different LLM? See [LLM-QUICKSTART.md](LLM-QUICKSTART.md) — a single page that explains the entire system in a format any LLM can consume.
+
 ## License
 
 MIT
