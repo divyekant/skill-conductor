@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_DIR="${HOME}/.claude/skills"
+
+SKILL_NAMES=(conductor shaping breadboarding breadboard-reflection)
+SKILL_PATHS=(
+    "$SCRIPT_DIR/skills/conductor"
+    "$SCRIPT_DIR/vendor/shaping-skills/shaping"
+    "$SCRIPT_DIR/vendor/shaping-skills/breadboarding"
+    "$SCRIPT_DIR/vendor/shaping-skills/breadboard-reflection"
+)
 
 echo "=== Skill Conductor Installer ==="
 echo ""
@@ -16,20 +24,13 @@ echo "  Done."
 # 2. Ensure skills directory exists
 mkdir -p "$SKILLS_DIR"
 
-# 3. Define what to symlink
-declare -A SKILL_LINKS=(
-    ["conductor"]="$SCRIPT_DIR/skills/conductor"
-    ["shaping"]="$SCRIPT_DIR/vendor/shaping-skills/shaping"
-    ["breadboarding"]="$SCRIPT_DIR/vendor/shaping-skills/breadboarding"
-    ["breadboard-reflection"]="$SCRIPT_DIR/vendor/shaping-skills/breadboard-reflection"
-)
-
-# 4. Create symlinks
+# 3. Create symlinks
 echo ""
 echo "[2/3] Symlinking skills to $SKILLS_DIR..."
 
-for skill_name in "${!SKILL_LINKS[@]}"; do
-    source_path="${SKILL_LINKS[$skill_name]}"
+for i in "${!SKILL_NAMES[@]}"; do
+    skill_name="${SKILL_NAMES[$i]}"
+    source_path="${SKILL_PATHS[$i]}"
     target_path="$SKILLS_DIR/$skill_name"
 
     if [ -L "$target_path" ]; then
@@ -38,7 +39,7 @@ for skill_name in "${!SKILL_LINKS[@]}"; do
             echo "  $skill_name: already linked (skipped)"
             continue
         else
-            echo "  $skill_name: symlink exists → $existing_target"
+            echo "  $skill_name: symlink exists -> $existing_target"
             read -p "    Override? [y/N] " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -65,16 +66,16 @@ for skill_name in "${!SKILL_LINKS[@]}"; do
     echo "  $skill_name: linked"
 done
 
-# 5. Summary
+# 4. Summary
 echo ""
 echo "[3/3] Installation complete."
 echo ""
 echo "Skills installed to $SKILLS_DIR:"
-for skill_name in "${!SKILL_LINKS[@]}"; do
+for skill_name in "${SKILL_NAMES[@]}"; do
     if [ -L "$SKILLS_DIR/$skill_name" ]; then
-        echo "  ✓ $skill_name"
+        echo "  + $skill_name"
     else
-        echo "  ✗ $skill_name (not installed)"
+        echo "  - $skill_name (not installed)"
     fi
 done
 echo ""
