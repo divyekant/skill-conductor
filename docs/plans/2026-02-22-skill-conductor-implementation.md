@@ -8,6 +8,8 @@
 
 **Tech Stack:** Bash (install/uninstall scripts), YAML (pipeline config), Markdown (skill definitions)
 
+**Key simplification:** No adapter layer. External skills are symlinked as-is. Claude is the runtime — it can read any skill and figure out how to use it. Adding a new skill = add to pipelines.yaml + symlink into ~/.claude/skills/.
+
 ---
 
 ### Task 1: Project Scaffolding
@@ -34,9 +36,9 @@ A skill composition framework for Claude Code. Aggregates skills from multiple s
 
 ## Quick Start
 
-```bash
+\`\`\`bash
 ./install.sh
-```
+\`\`\`
 
 ## Documentation
 
@@ -58,11 +60,11 @@ git commit -m "chore: add gitignore and readme"
 **Files:**
 - Create: `vendor/` (via git submodule)
 
-**Step 1: Add superpowers submodule**
+**Step 1: Add shaping-skills submodule**
 
-Note: superpowers is installed via Claude Code's plugin system at `~/.claude/plugins/cache/claude-plugins-official/superpowers/`. We don't vendor it as a submodule — it's managed by the plugin system. The conductor references its skills by name; they're already available via the Skill tool.
+Note: superpowers is installed via Claude Code's plugin system. We don't vendor it — the conductor references its skills by name.
 
-So we only submodule the skills NOT already available through the plugin system.
+We only submodule skills NOT already available through the plugin system.
 
 ```bash
 git submodule add https://github.com/rjs/shaping-skills.git vendor/shaping-skills
@@ -115,8 +117,8 @@ After running Task 2, use the actual commit hashes from the submodules.
 ## review-loop
 - **Repo:** https://github.com/hamelsmu/claude-review-loop
 - **Pinned:** <commit-hash> (initial pin, 2026-02-22)
-- **Skills provided:** review-loop (via adapter)
-- **Notes:** Requires Codex CLI (`npm install -g @openai/codex`) and jq. Uses hooks + Codex multi-agent. Needs adapter to work as a conductor phase.
+- **Skills provided:** review-loop
+- **Notes:** Requires Codex CLI (`npm install -g @openai/codex`) and jq. Uses hooks + Codex multi-agent.
 
 ## superpowers (not vendored)
 - **Source:** Claude Code plugin system (~/.claude/plugins/cache/claude-plugins-official/superpowers/)
@@ -228,7 +230,6 @@ skills:
     source: vendor/review-loop
     phase: review
     type: phase
-    adapter: review-loop-adapter
 
   requesting-code-review:
     source: plugin/superpowers
@@ -318,7 +319,13 @@ This is the core deliverable — the runtime router that replaces `using-superpo
 **Files:**
 - Create: `skills/conductor/skill.md`
 
-**Step 1: Write skill.md**
+**Step 1: Create directory**
+
+```bash
+mkdir -p skills/conductor
+```
+
+**Step 2: Write skill.md**
 
 The conductor skill is a markdown file with YAML frontmatter. It contains instructions for Claude to:
 1. Read pipelines.yaml at conversation start
@@ -452,10 +459,6 @@ These thoughts mean STOP — you're rationalizing skipping a skill:
 Always invoke skills via the Skill tool. Never read skill files directly or rely on memory of their contents. Skills may have been updated since you last read them.
 ```
 
-**Step 2: Verify the skill loads correctly**
-
-After install (Task 8), test by starting a new Claude Code session and checking that the conductor skill appears in the available skills list.
-
 **Step 3: Commit**
 
 ```bash
@@ -465,80 +468,7 @@ git commit -m "feat: add conductor skill — runtime router for skill pipelines"
 
 ---
 
-### Task 6: Write the Review-Loop Adapter
-
-**Files:**
-- Create: `adapters/review-loop-adapter/skill.md`
-
-**Step 1: Create adapters directory**
-
-```bash
-mkdir -p adapters/review-loop-adapter
-```
-
-**Step 2: Write adapter skill.md**
-
-This adapter wraps review-loop's setup process into a skill that the conductor can invoke during the review phase.
-
-```markdown
----
-name: review-loop-adapter
-description: "Adapter for hamelsmu/claude-review-loop. Sets up an automated Codex review loop during the review phase. Requires Codex CLI and jq."
----
-
-# Review Loop (Adapter)
-
-This skill adapts the [claude-review-loop](https://github.com/hamelsmu/claude-review-loop) plugin for use as a conductor pipeline phase.
-
-## Prerequisites
-
-Before using this skill, ensure:
-- **Codex CLI** is installed: `npm install -g @openai/codex`
-- **jq** is installed: `brew install jq`
-
-If either is missing, inform the user and skip this phase.
-
-## Process
-
-When invoked during the review phase:
-
-1. **Check prerequisites** — Run `command -v codex` and `command -v jq` to verify both are installed.
-
-2. **Generate review ID** — Create a unique identifier for this review session:
-   ```bash
-   REVIEW_ID="$(date +%Y%m%d-%H%M%S)-$(openssl rand -hex 3)"
-   ```
-
-3. **Ensure Codex multi-agent is enabled** — Check `~/.codex/config.toml` for `multi_agent = true` under `[features]`. Add it if missing.
-
-4. **Run Codex review** — Use the Codex MCP tool (mcp__codex__codex) to run a code review on the current diff:
-   ```
-   Review the changes in this project. Run git diff to see what changed.
-   Focus on: code quality, test coverage, security (OWASP top 10), architecture.
-   Write your review to reviews/review-<REVIEW_ID>.md
-   ```
-
-5. **Present review results** — Read the generated review file and present findings to the user.
-
-6. **Address feedback** — If the review identifies issues, work with the user to address them before moving to the next phase.
-
-## Fallback
-
-If Codex is not available, fall back to the `requesting-code-review` skill from superpowers (invoke it via the Skill tool). Inform the user:
-
-> Codex CLI not found — falling back to manual code review via requesting-code-review skill.
-```
-
-**Step 3: Commit**
-
-```bash
-git add adapters/review-loop-adapter/
-git commit -m "feat: add review-loop adapter for conductor pipeline integration"
-```
-
----
-
-### Task 7: Write install.sh
+### Task 6: Write install.sh
 
 **Files:**
 - Create: `install.sh`
@@ -570,7 +500,6 @@ declare -A SKILL_LINKS=(
     ["shaping"]="$SCRIPT_DIR/vendor/shaping-skills/shaping"
     ["breadboarding"]="$SCRIPT_DIR/vendor/shaping-skills/breadboarding"
     ["breadboard-reflection"]="$SCRIPT_DIR/vendor/shaping-skills/breadboard-reflection"
-    ["review-loop-adapter"]="$SCRIPT_DIR/adapters/review-loop-adapter"
 )
 
 # 4. Create symlinks
@@ -582,7 +511,6 @@ for skill_name in "${!SKILL_LINKS[@]}"; do
     target_path="$SKILLS_DIR/$skill_name"
 
     if [ -L "$target_path" ]; then
-        # Already a symlink — check if it points to us
         existing_target="$(readlink "$target_path")"
         if [ "$existing_target" = "$source_path" ]; then
             echo "  $skill_name: already linked (skipped)"
@@ -649,7 +577,7 @@ git commit -m "feat: add install script with conflict detection and backup"
 
 ---
 
-### Task 8: Write uninstall.sh
+### Task 7: Write uninstall.sh
 
 **Files:**
 - Create: `uninstall.sh`
@@ -666,7 +594,7 @@ SKILLS_DIR="${HOME}/.claude/skills"
 echo "=== Skill Conductor Uninstaller ==="
 echo ""
 
-SKILL_NAMES=(conductor shaping breadboarding breadboard-reflection review-loop-adapter)
+SKILL_NAMES=(conductor shaping breadboarding breadboard-reflection)
 
 for skill_name in "${SKILL_NAMES[@]}"; do
     target_path="$SKILLS_DIR/$skill_name"
@@ -710,7 +638,7 @@ git commit -m "feat: add uninstall script with backup restoration"
 
 ---
 
-### Task 9: Test the Installation
+### Task 8: Test the Installation
 
 **Step 1: Run install.sh**
 
@@ -719,7 +647,7 @@ cd /Users/divyekant/Projects/skill-conductor
 ./install.sh
 ```
 
-Expected: All 5 skills symlinked to `~/.claude/skills/`, no conflicts (ui-val is the only existing skill and it's not in our list).
+Expected: All 4 skills symlinked to `~/.claude/skills/`, no conflicts (ui-val is the only existing skill and it's not in our list).
 
 **Step 2: Verify symlinks**
 
@@ -733,7 +661,6 @@ conductor -> /Users/divyekant/Projects/skill-conductor/skills/conductor
 shaping -> /Users/divyekant/Projects/skill-conductor/vendor/shaping-skills/shaping
 breadboarding -> /Users/divyekant/Projects/skill-conductor/vendor/shaping-skills/breadboarding
 breadboard-reflection -> /Users/divyekant/Projects/skill-conductor/vendor/shaping-skills/breadboard-reflection
-review-loop-adapter -> /Users/divyekant/Projects/skill-conductor/adapters/review-loop-adapter
 ui-val (pre-existing, untouched)
 ```
 
@@ -754,7 +681,7 @@ Expected: YAML frontmatter visible for each.
 ls -la ~/.claude/skills/
 ```
 
-Expected: Only `ui-val` remains. Our 5 symlinks removed.
+Expected: Only `ui-val` remains. Our 4 symlinks removed.
 
 **Step 5: Re-install for use**
 
@@ -766,14 +693,13 @@ Expected: Only `ui-val` remains. Our 5 symlinks removed.
 
 ---
 
-### Task 10: End-to-End Verification
+### Task 9: End-to-End Verification
 
 **Step 1: Start a new Claude Code session**
 
 Open a new Claude Code conversation and verify:
 - The conductor skill appears in the available skills list
 - Shaping, breadboarding, breadboard-reflection skills appear
-- Review-loop-adapter appears
 
 **Step 2: Test classification**
 

@@ -42,9 +42,7 @@ skill-conductor/
 ├── skills/
 │   └── conductor/          # The master router skill
 │       └── skill.md
-├── adapters/               # Thin wrappers for skills needing interface bridging
 ├── vendor/                 # Git submodules pinned to specific commits
-│   ├── superpowers/
 │   ├── shaping-skills/
 │   └── review-loop/
 ├── vendor.lock             # Human-readable: vendor name → pinned version + reason
@@ -52,6 +50,8 @@ skill-conductor/
 ├── uninstall.sh            # Removes symlinks, restores previous state
 └── docs/plans/
 ```
+
+No adapter layer — Claude reads any skill directly and figures out how to use it. Adding a new skill = add to pipelines.yaml + symlink into ~/.claude/skills/.
 
 ## Pipeline Config (pipelines.yaml)
 
@@ -165,25 +165,12 @@ When a task arrives, the conductor presents:
 
 User can override. Once confirmed, the conductor tracks state and drives transitions.
 
-## Adapters
-
-Some external skills don't fit cleanly into "invoke via Skill tool." Adapters bridge the gap.
-
-Example: `review-loop` uses hooks and Codex. An adapter wraps the setup and translates it into a phase-compatible skill:
-
-```
-adapters/review-loop-adapter/
-└── skill.md    # Wraps review-loop invocation for the conductor's review phase
-```
-
-Adapters are thin — they don't reimplement the skill, they bridge the interface.
-
 ## Install & Wiring
 
 ### install.sh
 
 1. Clones/updates git submodules in `vendor/`
-2. Symlinks all skills into `~/.claude/skills/` (conductor + vendor skills + adapters)
+2. Symlinks all skills into `~/.claude/skills/` (conductor + vendor skills)
 3. Registers the conductor as the entry-point skill
 
 ### Conflict Handling
