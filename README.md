@@ -41,6 +41,17 @@ This symlinks the conductor and vendored skills into `~/.claude/skills/`. Start 
 
 Existing skills in `~/.claude/skills/` are untouched. If a name conflicts, the installer asks before overriding.
 
+### First-run onboarding
+
+On your first conversation after install, the conductor detects a fresh setup and walks you through configuration:
+
+1. **Discovers** what skills and plugins you already have installed
+2. **Asks** what other skills you want to include
+3. **Learns** your preferred workflow (how many pipelines, which phases matter)
+4. **Generates** a `pipelines.yaml` tailored to your setup
+
+No manual YAML editing needed. Just have a conversation.
+
 ## How It Works
 
 ### Phases

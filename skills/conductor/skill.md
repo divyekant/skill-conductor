@@ -12,7 +12,83 @@ You are the conductor — the entry-point skill that orchestrates all other skil
 At the start of every conversation:
 
 1. **Read the pipeline config** — Read `pipelines.yaml` from the skill-conductor project root (find it via the symlink at `~/.claude/skills/conductor/`; the project root is two levels up from the skill directory).
-2. **Wait for a task** — Do not classify or propose a pipeline until the user describes what they want to do.
+2. **Check for onboarding** — If pipelines.yaml contains `setup: needed`, run the Onboarding flow (see below) instead of normal classification.
+3. **Wait for a task** — Do not classify or propose a pipeline until the user describes what they want to do.
+
+## Onboarding
+
+When `setup: needed` is present in pipelines.yaml, the user has a fresh install. Your job is to discover their skills and generate a personalized config through conversation.
+
+### Step 1: Discover installed skills
+
+Scan for skills the user already has:
+
+```bash
+# List skills in ~/.claude/skills/
+ls ~/.claude/skills/
+
+# List installed plugins
+ls ~/.claude/plugins/cache/ 2>/dev/null
+
+# Check for common plugin directories
+ls ~/.claude/plugins/cache/claude-plugins-official/ 2>/dev/null
+```
+
+### Step 2: Present what you found
+
+Show the user what's installed:
+
+> I found these skills/plugins on your system:
+> - [list what was discovered]
+>
+> Are there any other skills you use or want to add? You can name any skill — it doesn't have to be installed yet.
+
+### Step 3: Ask about workflow
+
+Once you know the full skill set, ask about how they want to work:
+
+> How do you typically work? I'll set up pipelines to match. For example:
+>
+> - Do you want a **shaping/exploration phase** before planning? (useful for complex, multi-approach work)
+> - Do you want **automated code review** as a phase? (review-loop, or manual code review)
+> - Do you want a **formal planning phase** before building?
+> - Any phases you'd always skip?
+>
+> Or describe your ideal workflow in your own words and I'll map it to phases.
+
+Adapt your questions to what skills they have. Don't ask about phases that have no skills to support them.
+
+### Step 4: Ask about pipelines
+
+> How many pipelines do you want? Common setups:
+>
+> - **One pipeline** — same workflow for everything
+> - **Two** — a quick one (fix/tweak) and a full one (features)
+> - **Three** — quick fix, standard feature, complex/0-to-1
+>
+> Or describe what you need.
+
+### Step 5: Ask about always-available skills
+
+> Are there skills you want available at any time, regardless of which phase you're in?
+> These are utility skills you might reach for at any point — like a thinking tool, a learning tool, or parallel task dispatch.
+
+### Step 6: Generate pipelines.yaml
+
+Based on their answers, generate a complete `pipelines.yaml`:
+
+1. Write the new config to the pipelines.yaml file (same location you read it from)
+2. Remove the `setup: needed` line
+3. Show the user what you generated
+4. Ask if it looks right — iterate if needed
+
+### Onboarding principles
+
+- **Ask, don't assume** — don't presume which skills they have or want
+- **Any skill works** — the user can name skills you've never heard of. If it exists in `~/.claude/skills/` or as a plugin, the conductor can invoke it.
+- **Keep it conversational** — this isn't a form. Adapt your questions to their answers.
+- **One question at a time** — don't overwhelm with all questions at once
+- **Generate, don't template** — write a config tailored to their specific skills and workflow, not a copy of an example file
 
 ## Classification
 

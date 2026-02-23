@@ -5,6 +5,11 @@
 #
 # See examples/ for a full configuration using superpowers + shaping + review-loop.
 
+# Set to true on fresh install. The conductor will run an onboarding
+# flow to discover your skills and generate a personalized config.
+# Remove this line or set to false after setup is complete.
+setup: needed
+
 # Phases: ordered slots in a development lifecycle.
 # Define as many or few as your workflow needs.
 phases:
