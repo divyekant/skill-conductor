@@ -1,0 +1,21 @@
+# Vendor Lock
+# Records pinned versions for external skill dependencies.
+# Git submodules do the actual pinning; this file is human-readable context.
+
+## shaping-skills
+- **Repo:** https://github.com/rjs/shaping-skills
+- **Pinned:** 9eeda4e (initial pin, 2026-02-22)
+- **Skills provided:** shaping, breadboarding, breadboard-reflection
+- **Notes:** Also includes a PostToolUse hook (shaping-ripple.sh) — not installed by default
+
+## review-loop
+- **Repo:** https://github.com/hamelsmu/claude-review-loop
+- **Pinned:** ef6b7ee (initial pin, 2026-02-22)
+- **Skills provided:** review-loop
+- **Notes:** Requires Codex CLI and jq. Uses hooks + Codex multi-agent.
+
+## superpowers (not vendored)
+- **Source:** Claude Code plugin system (~/.claude/plugins/cache/claude-plugins-official/superpowers/)
+- **Version:** 4.3.1
+- **Skills provided:** brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, finishing-a-development-branch, think-different, learning, dispatching-parallel-agents, subagent-driven-development, using-git-worktrees, executing-plans, receiving-code-review, writing-skills
+- **Notes:** Managed by plugin system, not vendored. Conductor references these skills by name.
