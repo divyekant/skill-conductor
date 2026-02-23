@@ -16,13 +16,15 @@ At the start of every conversation:
 
 ## Classification
 
-When the user describes a task, classify it into one of the defined pipelines:
+When the user describes a task, classify it into one of the pipelines defined in `pipelines.yaml`.
 
-| Signal | Pipeline |
-|--------|----------|
-| Bug fix, typo, small tweak, clear single change | **small-fix** |
-| New feature, clear requirements, single approach obvious | **feature** |
-| Multiple viable approaches, 0-to-1, architectural decision, user says "let's shape this" | **complex** |
+Use these signals as guidance:
+
+| Signal | Typical Pipeline |
+|--------|-----------------|
+| Bug fix, typo, small tweak, clear single change | Simplest pipeline (fewest phases) |
+| New feature, clear requirements, single approach obvious | Mid-level pipeline |
+| Multiple viable approaches, 0-to-1, architectural decision | Most comprehensive pipeline |
 
 **Present your classification:**
 
@@ -62,33 +64,24 @@ For modifiers with `files-changed` triggers: after any file write/edit, check if
 
 ## Escalation
 
-If during a `feature` pipeline the user or the process reveals multiple viable approaches or significant architectural uncertainty:
+If during a simpler pipeline the user or the process reveals unexpected complexity (multiple viable approaches, architectural uncertainty):
 
 1. Acknowledge the escalation:
-   > This is more complex than initially classified. I'd recommend escalating to the **complex** pipeline to add a shaping phase.
+   > This is more complex than initially classified. I'd recommend switching to the **[more comprehensive pipeline]** to add the missing phases.
 2. Wait for user confirmation
-3. If confirmed, switch to the `complex` pipeline, starting at the `shape` phase (preserve any explore-phase work already done)
+3. If confirmed, switch pipelines, starting at the first new phase (preserve any prior work)
 
 ## Always-Available Skills
 
-These skills can be invoked at any point regardless of current phase. Do not gate them behind phase progression:
+Skills listed under `always-available` in pipelines.yaml can be invoked at any point regardless of current phase. Do not gate them behind phase progression.
 
-- **think-different** — When stuck or wanting a different angle
-- **learning** — When discovering fixes or encountering past mistakes
-- **dispatching-parallel-agents** — When facing independent parallel tasks
-- **subagent-driven-development** — When executing plans with independent tasks
-- **using-git-worktrees** — When needing isolation for feature work
-- **executing-plans** — When a plan exists and needs execution
-- **receiving-code-review** — When receiving feedback
-- **writing-skills** — When creating or editing skills
-
-Invoke these when their triggers match, just like the original `using-superpowers` router.
+Invoke these when their triggers match, regardless of which pipeline or phase is active.
 
 ## User Overrides
 
 The user is always in control:
-- They can skip phases: "Skip brainstorming, I know what I want"
-- They can jump to a phase: "Let's go straight to planning"
+- They can skip phases: "Skip exploration, I know what I want"
+- They can jump to a phase: "Let's go straight to building"
 - They can change pipelines mid-conversation
 - They can invoke any skill directly by name
 
@@ -105,7 +98,7 @@ Maintain mental state of:
 
 You do not need external state storage — this is conversational state within the current session.
 
-## Red Flags (from using-superpowers)
+## Red Flags
 
 These thoughts mean STOP — you're rationalizing skipping a skill:
 

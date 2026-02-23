@@ -1,6 +1,12 @@
-# Skill Conductor Pipeline Configuration
-# Defines phases, skill mappings, and named workflows.
+# Skill Conductor — Pipeline Configuration
+#
+# Define your development lifecycle here: phases, skills, and pipelines.
+# The conductor skill reads this file at the start of every conversation.
+#
+# See examples/ for a full configuration using superpowers + shaping + review-loop.
 
+# Phases: ordered slots in a development lifecycle.
+# Define as many or few as your workflow needs.
 phases:
   explore:
     order: 10
@@ -24,132 +30,41 @@ phases:
     order: 70
     description: Integrate and ship
 
+# Skills: map skill names to phases.
+#
+# Types:
+#   phase    — runs as a step in the pipeline sequence
+#   modifier — triggers conditionally (e.g., after specific file changes)
+#
+# Source values are for documentation only — the conductor invokes
+# skills by name via the Skill tool regardless of source.
 skills:
-  # --- Explore phase ---
-  brainstorming:
-    source: plugin/superpowers
-    phase: explore
-    type: phase
-
-  # --- Shape phase ---
+  # Shape Up methodology: iterate on requirements and solution shapes
   shaping:
     source: vendor/shaping-skills
     phase: shape
     type: phase
 
+  # Map system into UI/code affordances and wiring
   breadboarding:
     source: vendor/shaping-skills
     phase: shape
     type: phase
 
-  # --- Plan phase ---
-  writing-plans:
-    source: plugin/superpowers
-    phase: plan
-    type: phase
+# Always-available skills: can be invoked at any point regardless of phase.
+# Add skill names here that should never be gated by pipeline progression.
+always-available: []
 
-  # --- Build phase ---
-  test-driven-development:
-    source: plugin/superpowers
-    phase: build
-    type: phase
-
-  systematic-debugging:
-    source: plugin/superpowers
-    phase: build
-    type: phase
-
-  # --- Verify phase ---
-  verification-before-completion:
-    source: plugin/superpowers
-    phase: verify
-    type: phase
-
-  ui-val:
-    source: external
-    phase: verify
-    type: modifier
-    triggers:
-      files-changed:
-        - "*.tsx"
-        - "*.css"
-        - "*.html"
-        - "*.vue"
-        - "*.svelte"
-
-  # --- Review phase ---
-  review-loop:
-    source: vendor/review-loop
-    phase: review
-    type: phase
-
-  requesting-code-review:
-    source: plugin/superpowers
-    phase: review
-    type: phase
-
-  # --- Finish phase ---
-  finishing-a-development-branch:
-    source: plugin/superpowers
-    phase: finish
-    type: phase
-
-always-available:
-  - think-different
-  - learning
-  - dispatching-parallel-agents
-  - subagent-driven-development
-  - using-git-worktrees
-  - executing-plans
-  - receiving-code-review
-  - writing-skills
-
+# Pipelines: named workflows that select which phases and skills to use.
+#
+# The conductor classifies tasks and suggests a pipeline. Users can override.
+# Add your own pipelines to match your team's workflow.
 pipelines:
-  small-fix:
-    description: Bug fix or small tweak with clear approach
-    phases: [build, verify, finish]
+  # Default workflow using the vendored shaping skills
+  default:
+    description: Shape the problem, then build
+    phases: [shape, build]
     skills:
-      build:
-        - systematic-debugging
-        - test-driven-development
-      verify:
-        - verification-before-completion
-      finish:
-        - finishing-a-development-branch
-
-  feature:
-    description: New feature with clear requirements
-    phases: [explore, plan, build, verify, review, finish]
-    skills:
-      explore:
-        - brainstorming
-      plan:
-        - writing-plans
-      build:
-        - test-driven-development
-      verify:
-        - verification-before-completion
-      review:
-        - requesting-code-review
-      finish:
-        - finishing-a-development-branch
-
-  complex:
-    description: Multi-approach problem, 0-to-1, or significant architectural work
-    phases: [explore, shape, plan, build, verify, review, finish]
-    skills:
-      explore:
-        - brainstorming
       shape:
         - shaping
         - breadboarding
-      plan:
-        - writing-plans
-      build:
-        - test-driven-development
-      verify:
-        - verification-before-completion
-      review:
-        - review-loop
-      finish:
-        - finishing-a-development-branch

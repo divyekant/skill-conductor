@@ -79,7 +79,7 @@ for skill_name in "${SKILL_NAMES[@]}"; do
     fi
 done
 echo ""
-echo "Note: superpowers skills are loaded via Claude Code plugin system (not symlinked)."
-echo "The conductor skill will reference them by name at runtime."
+echo "Customize pipelines.yaml to add your own skills and workflows."
+echo "See examples/ for a full setup with superpowers + shaping + review-loop."
 echo ""
 echo "To uninstall: ./uninstall.sh"
