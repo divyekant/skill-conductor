@@ -256,7 +256,7 @@ always-available:
 # When enabled, the conductor dispatches independent skills within a phase
 # as parallel subagents instead of running them sequentially.
 multi-agent:
-  enabled: false  # flip to true when agent teams are configured
+  enabled: true
   # Skill chains that must run in order within a phase
   sequential-dependencies:
     - [shaping, breadboarding]
