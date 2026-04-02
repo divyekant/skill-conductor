@@ -112,9 +112,14 @@ Use these signals as guidance:
 > This looks like a **[pipeline]** task. I'd follow this pipeline:
 > `phase1 → phase2 → phase3 → ...`
 >
-> Each phase uses: [list skills per phase]
+> Each phase uses:
+> - phase1: skill-a, skill-b
+> - phase2: skill-c
+> - ...
 >
 > Should I proceed, or would you classify it differently?
+
+**Important:** List EVERY skill assigned to each phase exactly as defined in pipelines.yaml. Do not abbreviate, summarize, or omit any skills. The user needs the full picture to confirm or adjust.
 
 Wait for user confirmation before proceeding.
 
@@ -142,6 +147,55 @@ When a phase has multiple skills (e.g., shape has `shaping` + `breadboarding`):
 - **Modifier skills** trigger conditionally — check after file changes whether any modifier's trigger conditions are met, and if so, invoke it
 
 For modifiers with `files-changed` triggers: after any file write/edit, check if the changed file matches the glob patterns. If yes, invoke the modifier skill.
+
+## Multi-Agent Execution
+
+When `multi-agent.enabled` is `true` in pipelines.yaml, dispatch independent skills within a phase as parallel subagents instead of running them sequentially.
+
+### Reading the Config
+
+After loading pipelines.yaml, check:
+- `multi-agent.enabled` — if `false` or absent, use sequential execution for all phases
+- `multi-agent.sequential-dependencies` — ordered chains of skills that cannot be parallelized
+- `multi-agent.worktree-skills` — skills that run in an isolated git worktree
+
+### Dispatch Algorithm
+
+When entering a phase with multiple skills:
+
+1. **Check for chains** — Do any skills in this phase appear together in a `sequential-dependencies` entry?
+2. **Group**:
+   - Skills in the same chain → one sequential group (preserve declared order)
+   - All other skills → independent, can run in parallel
+3. **Dispatch** — Launch one subagent per independent skill and one subagent per sequential chain. Use the Agent tool for each, all in a single message to maximize parallelism.
+4. **Wait** — All subagents must complete before advancing to the next phase.
+
+### Subagent Prompts
+
+Each subagent needs enough context to work independently. Include in the prompt:
+- **Task description**: what the user is building/fixing
+- **Phase context**: which phase this is and what prior phases produced
+- **Skill to invoke**: tell the subagent to use the Skill tool to load and follow the skill
+- **Artifacts**: reference any plans, specs, or code from earlier phases
+
+Example prompt for a verify-phase subagent:
+> Run the /qa skill for this task: [task summary]. The implementation is complete on branch [branch]. Test the user flows described in [plan reference]. Report findings when done.
+
+### Worktree Isolation
+
+For skills listed in `multi-agent.worktree-skills`, add `isolation: "worktree"` to the Agent tool call. This gives the subagent a clean copy of the repo — critical for review skills that must read code without interference from concurrent work.
+
+### Fallback
+
+If the Agent tool is unavailable (non-CC environment, or user hasn't enabled multi-agent), fall back to sequential execution — the default behavior described in Phase Progression above.
+
+### Result Coordination
+
+After all subagents in a phase complete:
+1. **Read results** — each subagent returns a summary
+2. **Synthesize** — combine findings, flag conflicts or overlapping issues
+3. **Present** — show the user a unified phase summary before moving on
+4. **Gate** — if any subagent flagged a blocking issue (test failure, security vulnerability, review rejection), pause and surface it before advancing
 
 ## Escalation
 

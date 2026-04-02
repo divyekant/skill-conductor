@@ -1,18 +1,18 @@
-# Example: Full Pipeline Configuration with Superpowers + Shaping + Review Loop
+# Pipeline Configuration: Superpowers + gstack + Shaping + Review Loop
 #
-# This example shows how to wire together:
-# - Superpowers plugin (brainstorming, TDD, debugging, code review, etc.)
-# - Shaping skills (Shape Up methodology)
-# - Review loop (automated Codex code review)
-# - UI validation (visual verification of frontend changes)
+# Skill sources:
+# - Superpowers plugin: engineering discipline (TDD, debugging, verification, code review)
+# - gstack: specialist skills + persistent headless browser (security, QA, perf, deploy)
+# - Shaping skills: Shape Up methodology (vendored)
+# - Review loop: automated Codex code review (vendored, requires Codex CLI + jq)
+# - External: Apollo, Hermes, Delphi, Kalos, Pencil, UI-Val
 #
 # Prerequisites:
 # - Superpowers plugin: claude plugin install superpowers
+# - gstack: git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup
 # - Shaping skills: vendored in this repo
 # - Review loop: vendored in this repo (requires Codex CLI + jq)
 # - ui-val: https://github.com/AshDevFr/ui-val (install separately)
-#
-# To use: copy this file to pipelines.yaml in the project root.
 
 phases:
   explore:
@@ -30,6 +30,9 @@ phases:
   verify:
     order: 50
     description: Verify correctness and quality
+  simplify:
+    order: 55
+    description: Review changed code for reuse, quality, and efficiency
   review:
     order: 60
     description: Independent review
@@ -42,6 +45,13 @@ phases:
 
 skills:
   # --- Explore phase ---
+  # gstack office-hours: validate the idea before designing it
+  # YC-style forcing questions (demand, wedge, specificity) or builder-mode brainstorm
+  office-hours:
+    source: gstack
+    phase: explore
+    type: phase
+
   # Superpowers brainstorming: collaborative design before implementation
   brainstorming:
     source: plugin/superpowers
@@ -81,6 +91,13 @@ skills:
     phase: plan
     type: phase
 
+  # gstack eng review: architecture/test plan review gate after writing-plans
+  # Staff-eng perspective on data flow, edge cases, performance, test coverage
+  plan-eng-review:
+    source: gstack
+    phase: plan
+    type: phase
+
   # --- Build phase ---
   # Superpowers TDD: red-green-refactor cycle
   test-driven-development:
@@ -104,6 +121,13 @@ skills:
   # Delphi: generate and execute comprehensive test scenarios (guided cases)
   delphi:
     source: external
+    phase: verify
+    type: phase
+
+  # gstack QA: real browser testing with persistent Chromium (~100ms commands)
+  # Tests user flows, finds bugs, fixes them atomically, re-verifies
+  qa:
+    source: gstack
     phase: verify
     type: phase
 
@@ -132,6 +156,30 @@ skills:
         - "*.vue"
         - "*.svelte"
 
+  # gstack benchmark: Core Web Vitals + page load perf regression detection (modifier)
+  # Only triggers when frontend files are changed
+  benchmark:
+    source: gstack
+    phase: verify
+    type: modifier
+    triggers:
+      files-changed:
+        - "*.tsx"
+        - "*.css"
+        - "*.html"
+        - "*.vue"
+        - "*.svelte"
+        - "*.js"
+        - "*.ts"
+
+  # --- Simplify phase ---
+  # Simplify: invoke /simplify command to review changed code
+  simplify:
+    source: external
+    phase: simplify
+    type: phase
+    invoke: /simplify
+
   # --- Review phase ---
   # Automated Codex review loop (requires Codex CLI + jq)
   review-loop:
@@ -142,6 +190,20 @@ skills:
   # Superpowers code review: structured review checklist
   requesting-code-review:
     source: plugin/superpowers
+    phase: review
+    type: phase
+
+  # gstack CSO: OWASP Top 10 + STRIDE threat model + secrets archaeology
+  # Infrastructure-first security audit with active verification
+  cso:
+    source: gstack
+    phase: review
+    type: phase
+
+  # gstack Codex: cross-model review — independent second opinion from OpenAI
+  # Requires Codex CLI installed
+  codex:
+    source: gstack
     phase: review
     type: phase
 
@@ -165,6 +227,13 @@ skills:
     phase: release
     type: phase
 
+  # gstack canary: post-deploy production monitoring
+  # Watches for console errors, perf regressions, page failures after deploy
+  canary:
+    source: gstack
+    phase: release
+    type: phase
+
 # Skills available at any point regardless of current phase
 always-available:
   - think-different
@@ -177,18 +246,40 @@ always-available:
   - writing-skills
   - pencil-prototyping
   - kalos
+  # gstack utilities
+  - browse           # persistent headless browser on demand
+  - careful          # destructive command warnings
+  - retro            # weekly engineering retrospective
+  - investigate      # lightweight debugging alternative
+
+# Multi-agent configuration
+# When enabled, the conductor dispatches independent skills within a phase
+# as parallel subagents instead of running them sequentially.
+multi-agent:
+  enabled: false  # flip to true when agent teams are configured
+  # Skill chains that must run in order within a phase
+  sequential-dependencies:
+    - [shaping, breadboarding]
+    - [writing-plans, plan-eng-review]
+  # Skills dispatched in an isolated git worktree (clean repo copy)
+  worktree-skills:
+    - review-loop
+    - codex
+    - cso
 
 pipelines:
   # Quick bug fix or small tweak — skip exploration and planning
   small-fix:
     description: Bug fix or small tweak with clear approach
-    phases: [build, verify, finish, release]
+    phases: [build, verify, simplify, finish, release]
     skills:
       build:
         - systematic-debugging
         - test-driven-development
       verify:
         - verification-before-completion
+      simplify:
+        - simplify
       finish:
         - finishing-a-development-branch
         - hermes
@@ -198,21 +289,27 @@ pipelines:
   # Standard feature — explore the idea, plan, build, review, ship
   feature:
     description: New feature with clear requirements
-    phases: [explore, plan, build, verify, review, finish, release]
+    phases: [explore, plan, build, verify, simplify, review, finish, release]
     skills:
       explore:
+        - office-hours
         - brainstorming
         - pencil-prototyping
         - kalos
       plan:
         - writing-plans
+        - plan-eng-review
       build:
         - test-driven-development
       verify:
         - verification-before-completion
         - delphi
+        - qa
+      simplify:
+        - simplify
       review:
         - requesting-code-review
+        - cso
       finish:
         - finishing-a-development-branch
         - hermes
@@ -222,9 +319,10 @@ pipelines:
   # Complex/0-to-1 work — full Shape Up methodology before implementation
   complex:
     description: Multi-approach problem, 0-to-1, or significant architectural work
-    phases: [explore, shape, plan, build, verify, review, finish, release]
+    phases: [explore, shape, plan, build, verify, simplify, review, finish, release]
     skills:
       explore:
+        - office-hours
         - brainstorming
         - pencil-prototyping
       shape:
@@ -234,15 +332,22 @@ pipelines:
         - kalos
       plan:
         - writing-plans
+        - plan-eng-review
       build:
         - test-driven-development
       verify:
         - verification-before-completion
         - delphi
+        - qa
+      simplify:
+        - simplify
       review:
         - review-loop
+        - cso
+        - codex
       finish:
         - finishing-a-development-branch
         - hermes
       release:
         - apollo
+        - canary
